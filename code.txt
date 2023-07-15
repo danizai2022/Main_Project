@@ -1,0 +1,85 @@
+def linearregression(pts):
+    x = np.expand_dims(pts[:, 0], axis=-1)
+    y = np.expand_dims(pts[:, 1], axis=-1)
+
+    featurs = np.hstack((np.ones_like(x), x))  # , x**2))
+
+    theta = np.linalg.inv(np.matmul(featurs.transpose(), featurs))
+    theta = np.matmul(theta, featurs.transpose())
+    theta = np.matmul(theta, y)
+    slope = theta[1]
+    intercept = theta[0]
+    return slope, intercept
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+while True:
+    ret, img = cam.getPictures()
+    if not ret:
+        continue
+    frame_idx += 1
+    fps += 1
+    # -----------------------------------------------------------------------5
+    t = time.time()
+    # -----------------------------------------------------------------------
+    img = cv2.blur(img, (5, 1))
+    print(img.shape)
+    pts = ConvayerBase.extract_points(
+        img, thresh=50, perspective_angle=70
+    )  # This function is used to extract points from the image
+
+    res_y = ConvayerBase.moving_avrage(
+        pts[:, 1], 10
+    )  # This function is used to apply the moving average function as a filter to remove any noise from the pts[:, 1] as well as smooth the pts[:, 1]
+    pts[: res_y.shape[0], 1] = res_y
+
+    # -----------------------------------------------------------------------
+    slope, intercept = linearregression(
+        pts
+    )  # This function is used to apply linearregression to the extracted point in order to extract the slop as well as an intercept of the extracted point "pts"
+
+    good_y = (pts[:, 0] * slope + intercept).astype(
+        np.int32
+    )  # This is a line which is extracted from the linearregression function
+    error_y = (
+        pts[:, 1] - good_y
+    )  # This is a difference between the extracted point pts[:, 1] and the line extracted from the linearregression
+    error_y = error_y / MAX_ERROR * GRADIANT_SIZE // 2
+
+    # -----------------------------------------------------------------------
+    step = 2
+    if frame_idx > res.shape[0] // step - step - 1:
+        frame_idx = res.shape[0] // step - step - 1
+        res[:-step] = res[step:]
+
+    res[frame_idx * step : frame_idx * step + step, pts[:, 0]] = gradiant[
+        np.clip(error_y + GRADIANT_SIZE // 2, 0, GRADIANT_SIZE - 1).astype(np.int32)
+    ]
+    # -----------------------------------------------------------------------
+    t = time.time() - t
+    t_mean += t
+    if t_mean > 1:
+        print(
+            fps,
+            t_mean,
+        )
+        t_mean = 0
+        fps = 0
+
+    cv2.imshow("res", res)
+    cv2.waitKey(1)
