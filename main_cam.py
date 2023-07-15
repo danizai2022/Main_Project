@@ -27,12 +27,13 @@ def perspective_correction(pts, angle):
     return pts
 
 
-def linearregression(pts):
+def linearregression(
+    pts,
+):  # This function is used to apply linearregression function to extrct slope and intercept of the points
     x = np.expand_dims(pts[:, 0], axis=-1)
     y = np.expand_dims(pts[:, 1], axis=-1)
 
     featurs = np.hstack((np.ones_like(x), x))  # , x**2))
-
     theta = np.linalg.inv(np.matmul(featurs.transpose(), featurs))
     theta = np.matmul(theta, featurs.transpose())
     theta = np.matmul(theta, y)
@@ -55,18 +56,20 @@ def CreateContour(
 ):  # This function is used to create the contour from the stored frame as well as extract the characteristic of the defect like height, width, area and perimeter
     frame_idx2 = frame_idx2 + 1
     gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
-    _, thresh_img = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
+    _, thresh_img = cv2.threshold(
+        gray, 50, 255, cv2.THRESH_BINARY
+    )  # First we apply threshold function for image in order to get the binary image
     thresh_img = cv2.erode(thresh_img, np.ones((3, 3)), iterations=1)
     thresh_img = cv2.dilate(thresh_img, np.ones((3, 3)), iterations=3)
     thresh_img = cv2.erode(thresh_img, np.ones((3, 3)), iterations=2)
     contours, hierarchy = cv2.findContours(
         thresh_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
-    )
+    )  # Find the contour for image
 
     for c in contours:
-        area = cv2.contourArea(c)
-        perimeter = cv2.arcLength(c, True)
-        x, y, w, h = cv2.boundingRect(c)
+        area = cv2.contourArea(c)  # Find the area of contour
+        perimeter = cv2.arcLength(c, True)  # Find the perimeter of contour
+        x, y, w, h = cv2.boundingRect(c)  # Find the Coordinates of contour
         if h > 0:
             rr = cv2.rectangle(gray, (x, y), (x + w, y + h), (255, 0, 0), 5)
 
@@ -76,15 +79,17 @@ def CreateContour(
             "width": "{:.2f}".format(0.03 * w),
             "area": "{:.2f}".format(area * 0.001),
             "perimeter": "{:.2f}".format(perimeter * 0.037),
-        }
+        }  # Store the  characteristic of the defect
 
-        defect_image_list.append_mylist(default_details)
+        defect_image_list.append_mylist(
+            default_details
+        )  # Append list to defect_image_list
 
     return defect_image_list
 
 
 while True:
-    ret, img = cam.getPictures()
+    ret, img = cam.getPictures()  # Get image from the camera
     if not ret:
         continue
     frame_idx += 1
