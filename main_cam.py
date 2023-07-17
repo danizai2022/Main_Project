@@ -155,7 +155,6 @@ while True:
         fps = 0
 
     cv2.imshow("res", res)
-
     cv2.waitKey(1)
 
 
