@@ -14,14 +14,16 @@ gradiant = gradiant.reshape((-1, 3))
 defect_image_list = {}
 
 
-def pts2img(pts, shape):
+def pts2img(pts, shape):  # This function is used to apply mask for the input pts
     pts = pts.astype(np.int32)
     mask = np.zeros(shape, dtype=np.uint8)
     mask[pts[:, 1], pts[:, 0]] = 255
     return mask
 
 
-def perspective_correction(pts, angle):
+def perspective_correction(
+    pts, angle
+):  # This function is used to apply the perspective_correlection  for the image
     pts[:, 1] = pts[:, 1] / np.cos(np.deg2rad(angle))
     pts = pts.astype(np.int32)
     return pts
@@ -43,11 +45,13 @@ def linearregression(
 
 
 image_path = "image"
-res = np.zeros((500, 640, 3), dtype=np.uint8)
+res = np.zeros((500, 640, 3), dtype=np.uint8)  # This matrix is used to store the frame
 t_mean = 0
 frame_idx = 0
-cam = camera_connection.Collector("23287291")
-cam.start_grabbing()
+cam = camera_connection.Collector(
+    "23287291"
+)  # Craete the cam object from the camera_connection
+cam.start_grabbing()  # Start the grabbing
 fps = 0
 
 
@@ -59,9 +63,15 @@ def CreateContour(
     _, thresh_img = cv2.threshold(
         gray, 50, 255, cv2.THRESH_BINARY
     )  # First we apply threshold function for image in order to get the binary image
-    thresh_img = cv2.erode(thresh_img, np.ones((3, 3)), iterations=1)
-    thresh_img = cv2.dilate(thresh_img, np.ones((3, 3)), iterations=3)
-    thresh_img = cv2.erode(thresh_img, np.ones((3, 3)), iterations=2)
+    thresh_img = cv2.erode(
+        thresh_img, np.ones((3, 3)), iterations=1
+    )  # This function is used to Apply erode function on the image
+    thresh_img = cv2.dilate(
+        thresh_img, np.ones((3, 3)), iterations=3
+    )  # This function is used to Apply dilate function on the image
+    thresh_img = cv2.erode(
+        thresh_img, np.ones((3, 3)), iterations=2
+    )  # This function is used to Apply erode function on the image
     contours, hierarchy = cv2.findContours(
         thresh_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )  # Find the contour for image
@@ -92,12 +102,14 @@ while True:
     ret, img = cam.getPictures()  # Get image from the camera
     if not ret:
         continue
-    frame_idx += 1
+    frame_idx += 1  # Increase the number of the frame that capture by the camera
     fps += 1
-    # -----------------------------------------------------------------------5
-    t = time.time()
     # -----------------------------------------------------------------------
-    img = cv2.blur(img, (5, 1))
+    t = time.time()  #    The satrt time of the algorithm
+    # -----------------------------------------------------------------------
+    img = cv2.blur(
+        img, (5, 1)
+    )  # This function is used to apply blur kernel function on the image
     print(img.shape)
     pts = ConvayerBase.extract_points(
         img, thresh=50, perspective_angle=70
@@ -132,9 +144,9 @@ while True:
     ]  # This function is used to stroe the frame in res array in order to find the contour of defect in image.
     # -----------------------------------------------------------------------
 
-    t = time.time() - t
-    t_mean += t
-    if t_mean > 1:
+    t = time.time() - t  # the Final Time of the Algorithm
+    t_mean += t  # This function is used to store the frame rate of the algorithm
+    if t_mean > 1:  # The frame rate of the algorithm is calculated
         print(
             fps,
             t_mean,
@@ -143,6 +155,7 @@ while True:
         fps = 0
 
     cv2.imshow("res", res)
+
     cv2.waitKey(1)
 
 
